@@ -1,0 +1,14 @@
+{
+  "name": "perceptron.js",
+  "version": "1.0.0",
+  "description": "Package for learning how to program MPLs",
+  "author": "DiegoHerrera262",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "tsc": "^2.0.4",
+    "typescript": "^5.1.5"
+  }
+}
