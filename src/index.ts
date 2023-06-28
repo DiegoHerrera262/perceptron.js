@@ -1,3 +1,1 @@
-export const testFunc = (myVar: Number): Number => {
-  return myVar;
-};
+export * from './interface';

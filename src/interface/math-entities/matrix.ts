@@ -6,10 +6,34 @@ type DotReturnType<T> =
   T extends Matrix ? Matrix :
   T extends number ? Matrix : unknown;
 
+/**
+ * Class for modelling Matrix elementary operations 
+ * @remarks
+ * The operations implemented include:
+ * 1. addition
+ * 1. Multiplication
+ *  1. multiplication by scalar
+ *  1. multiplication by vector
+ *  1. multiplication by other matrix
+ * 1. Transposition
+ * 1. Matrix norm for computing distance
+ */
+ 
 export class Matrix extends Array<Array<number>> {
+  /**
+   * @property {number} numRows - Number of rows in the matrix
+   * @property {number} numCols - Number of columns in the matrix
+  */
   numRows: number = 0;
   numCols: number = 0;
 
+  /**
+   * Constructor of the Matrix
+   * @remarks
+   * The rows of the matrix are not supposed to change in size
+   * in runtime. Only the components.
+   * @param {Array<number>} rows - The actual rows of the matrix
+  */
   constructor(...rows: number[][]) {
     if (rows.length === 0 || rows.some(row => row.length !== rows[0].length)) {
       throw new Error('Invalid matrix: Rows must have the same length.');
