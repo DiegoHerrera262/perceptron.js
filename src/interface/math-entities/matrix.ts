@@ -1,6 +1,10 @@
 import { Vector } from "./vector";
 
 type NumberMatrix = Array<Array<number>>;
+type DotReturnType<T> =
+  T extends Vector ? Vector :
+  T extends Matrix ? Matrix :
+  T extends number ? Matrix : unknown;
 
 export class Matrix extends Array<Array<number>> {
   numRows: number = 0;
@@ -104,14 +108,28 @@ export class Matrix extends Array<Array<number>> {
     return new Vector(...result);
   }
 
-  dot(b: Matrix | Vector, transpose: boolean = false): Vector | Matrix {
+  numberDot(b: number): Matrix {
+    const result: NumberMatrix = [];
+    for (let i = 0; i < this.numRows; i++) {
+      result[i] = [];
+      for (let j = 0; j < this.numCols; j++) {
+        result[i][j] = this[i][j] * b;
+      }
+    }
+    return new Matrix(...result);
+  }
+
+  dot<T>(b: T, transpose: boolean = false): DotReturnType<T> {
     if (b instanceof Matrix) {
-      return this.matrixDot(b, transpose);
+      return this.matrixDot(b, transpose) as DotReturnType<T>;
     }
     if (b instanceof Vector) {
-      return this.vectorDot(b);
+      return this.vectorDot(b) as DotReturnType<T>;
     }
-    throw new Error(`[VECMUL] Vectors must be of type Matrix or Vector.`);
+    if (typeof b === 'number') {
+      return this.numberDot(b) as DotReturnType<T>;
+    }
+    throw new Error(`[MATMUL] Vectors must be of type Matrix or Vector or Number.`);
   }
 
   transpose(): Matrix {
