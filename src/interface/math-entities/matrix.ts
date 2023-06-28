@@ -1,4 +1,4 @@
-import { Vector } from "./vector";
+import { Vector } from './vector';
 
 type NumberMatrix = Array<Array<number>>;
 type DotReturnType<T> =
@@ -31,7 +31,8 @@ export class Matrix extends Array<Array<number>> {
    * Constructor of the Matrix
    * @remarks
    * The rows of the matrix are not supposed to change in size
-   * in runtime. Only the components.
+   * in runtime. Only the components. It also validates that the
+   * array is in fact square
    * @param {Array<number>} rows - The actual rows of the matrix
   */
   constructor(...rows: number[][]) {
@@ -43,6 +44,15 @@ export class Matrix extends Array<Array<number>> {
     this.numCols = rows[0]?.length ?? 0;
   }
 
+  /**
+   * Addition of two matrices
+   * @remarks
+   * Adds matrices using nested loop. Ideally, I would like to
+   * use a more efficient algorithm but this is for illustrative
+   * purposes
+   * @param {Matrix} other - The matrix to be added
+   * @returns {Matrix} The result of the addition
+  */
   add(other: Matrix): Matrix {
     if (this.numRows !== other.numRows || this.numCols !== other.numCols) {
       throw new Error(`[MATADD] Matrices must have the same dimensions (a = [${this.numRows}, ${this.numCols}], b = [${other.numRows}, ${other.numCols}]).`);
@@ -60,6 +70,14 @@ export class Matrix extends Array<Array<number>> {
     return new Matrix(...result);
   }
 
+  /**
+   * Multiplication of two matrices
+   * @remarks
+   * Multiplies matrices using nested loop. Ideally, I would like to
+   * use a more efficient algorithm but this is for illustrative
+   * @param {Matrix} b - Matrix to multiply
+   * @returns {Matrix} The result of the multiplication
+   */
   normalDot(b: Matrix): Matrix {
     if (this.numCols !== b.numRows) {
       throw new Error(`[MATMUL] Matrices must have consistent dimensions (a = [${this.numRows}, ${this.numCols}], b = [${b.numRows}, ${b.numCols}]).`);
@@ -80,14 +98,15 @@ export class Matrix extends Array<Array<number>> {
     return new Matrix(...result);
   }
 
+  /**
+   * Multiplication of two matrices (with first one transposed)
+   * @remarks
+   * Multiplies matrices using nested loop. Ideally, I would like to
+   * use a more efficient algorithm but this is for illustrative
+   * @param {Matrix} b - Matrix to multiply
+   * @returns {Matrix} The result of the product
+  */
   transposedDot(b: Matrix): Matrix {
-
-    /*
-    Compute the transposed dot product
-    for avoiding to parse the matrix
-    twice in future calculations
-    */
-
     if (this.numCols !== b.numCols) {
       throw new Error(`[MATMUL] Matrices must have consistent dimensions (a = [${this.numRows}, ${this.numCols}], b = [${b.numRows}, ${b.numCols}]).`);
     }
@@ -107,6 +126,15 @@ export class Matrix extends Array<Array<number>> {
     return new Matrix(...result);
   }
 
+  /**
+   * Multiplication of two matrices
+   * @remarks
+   * Multiplies matrices using nested loop. Ideally, I would like to
+   * use a more efficient algorithm but this is for illustrative
+   * @param {Matrix} b - Matrix to multiply
+   * @param {boolean} transpose - Whether to transpose the first matrix
+   * @return {Matrix} The result of the multiplication
+  */
   matrixDot(b: Matrix, transpose: boolean = false): Matrix {
     if (!transpose) {
       return this.normalDot(b);
@@ -114,6 +142,14 @@ export class Matrix extends Array<Array<number>> {
     return this.transposedDot(b);
   }
 
+  /**
+   * Multiplication of Matrix with vector
+   * @remarks
+   * Multiplies matrices using nested loop. Ideally, I would like to
+   * use a more efficient algorithm but this is for illustrative
+   * @param {Vector} b - The vector to multiply by right
+   * @returns {Vector} The result of multiplication
+  */
   vectorDot(b: Vector): Vector {
     if (this.numCols !== b.length) {
       throw new Error(`[VECMUL] Vectors must have the same length (a = [${this.numCols}], b = [${b.length}]).`);
@@ -132,6 +168,14 @@ export class Matrix extends Array<Array<number>> {
     return new Vector(...result);
   }
 
+  /**
+   * Multiplication of Matrix with scalar
+   * @remarks
+   * Multiplies matrices using nested loop. Ideally, I would like to
+   * use a more efficient algorithm but this is for illustrative
+   * @param {number} b - scalar to multiply with
+   * @returns {Matrix} The result of multiplication
+  */
   numberDot(b: number): Matrix {
     const result: NumberMatrix = [];
     for (let i = 0; i < this.numRows; i++) {
@@ -143,6 +187,16 @@ export class Matrix extends Array<Array<number>> {
     return new Matrix(...result);
   }
 
+  /**
+   * Generic dot operation (Multiplication)
+   * @remarks
+   * If the argument is numeric, returns scalar multiplication of matrix
+   * If the argument is vector, returns vector multiplication
+   * If the argument is matrix, returns matrix multiplication
+   * @param {T} b - object to multiply by right
+   * @param {boolean} transpose - Whether to transpose the matrix
+   * @returns {DotReturnType<T>} The result of the multiplication
+  */
   dot<T>(b: T, transpose: boolean = false): DotReturnType<T> {
     if (b instanceof Matrix) {
       return this.matrixDot(b, transpose) as DotReturnType<T>;
@@ -156,6 +210,10 @@ export class Matrix extends Array<Array<number>> {
     throw new Error(`[MATMUL] Vectors must be of type Matrix or Vector or Number.`);
   }
 
+  /**
+   * Transpose matrix
+   * @returns {Matrix} The matrix transposed
+  */
   transpose(): Matrix {
     const rows = this.numRows;
     const cols = this.numCols;
@@ -172,6 +230,10 @@ export class Matrix extends Array<Array<number>> {
     return new Matrix(...transposedMatrix);
   }
 
+  /**
+   * Matrix norm
+   * @returns {number} The norm of the matrix
+  */
   norm(): number {
     let sum = 0;
     for (let i = 0; i < this.numRows; i++) {
