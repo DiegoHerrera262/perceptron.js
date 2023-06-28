@@ -1,3 +1,3 @@
-export const testFunc = (myvar: Number): Number => {
-  return myvar;
+export const testFunc = (myVar: Number): Number => {
+  return myVar;
 };
