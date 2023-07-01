@@ -1,4 +1,5 @@
-import { Matrix } from "./matrix";
+import { ActivationFunction } from '../interface';
+import { Matrix } from './matrix';
 
 type NumberMatrix = Array<Array<number>>;
 type DotReturnType<T> =
@@ -81,7 +82,23 @@ export class Vector extends Array<number> {
     if (typeof b === 'number') {
       return this.numberDot(b) as DotReturnType<T>;
     }
-    throw new Error(`[VECMUL] Input must be vectors or numbers`);
+    throw new Error('[VECMUL] Input must be vectors or numbers');
+  }
+
+  /**
+   * Direct product of two vectors
+   * @param {Vector} b - Vector for dot product
+   * @returns {Vector} The element-wise product
+  */
+  directDot(b: Vector): Vector {
+    if (b.length !== this.length) {
+      throw new Error(`[VECMUL] Vectors must have the same length (a = ${this.length}, b = ${b.length})`);
+    }
+    const result: number[] = [];
+    for (let i = 0; i < this.length; i++) {
+      result[i] = b[i] * this[i];
+    }
+    return new Vector(...result);
   }
 
   /**
@@ -93,9 +110,9 @@ export class Vector extends Array<number> {
     if (this.length !== b.length) {
       throw new Error(`[VECADD] Vectors must have the same length (a = ${this.length}, b = ${b.length})`);
     }
-    let sum: number[] = [];
+    const sum: number[] = [];
     for (let i = 0; i < this.length; i++) {
-      sum[i] = this[i] * b[i];
+      sum[i] = this[i] + b[i];
     }
     return new Vector(...sum);
   }
@@ -110,5 +127,18 @@ export class Vector extends Array<number> {
       sum += this[i] * this[i];
     }
     return Math.sqrt(sum);
+  }
+
+  /**
+   * Vectorized operator
+   * @param {ActivationFunction} Function to map over the vector
+   * @returns {Vector} vector after element-wise application of function
+  */
+  apply(f: ActivationFunction): Vector {
+    const v: Array<number> = [];
+    for (let i = 0; i < this.length; i++) {
+      v[i] = f(this[i]);
+    }
+    return new Vector(...v);
   }
 }

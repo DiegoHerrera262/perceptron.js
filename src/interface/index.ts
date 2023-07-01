@@ -1,1 +1,1 @@
-export * from './math-entities';
+export * from './mlp-params.interface';

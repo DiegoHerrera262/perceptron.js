@@ -7,16 +7,21 @@
   "scripts": {
     "build": "tsc",
     "build:docs": "typedoc",
-    "lint": "eslint .",
-    "test": "jest --passWithNoTests"
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "test:math": "jest --verbose --testPathPattern=./tests/math --passWithNoTests",
+    "test:mlp": "jest --verbose --testPathPattern=./tests/mlp --passWithNoTests",
+    "test:all": "jest --passWithNoTests"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.2",
+    "@typescript-eslint/eslint-plugin": "^5.60.1",
     "@typescript-eslint/parser": "^5.60.1",
+    "eslint": "^8.43.0",
     "jest": "^29.5.0",
     "ts-jest": "^29.1.0",
     "tsc": "^2.0.4",
     "typedoc": "^0.24.8",
     "typescript": "^5.1.5"
-  },
-  "dependencies": {}
+  }
 }

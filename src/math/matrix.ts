@@ -1,3 +1,4 @@
+import { ActivationFunction } from '../interface';
 import { Vector } from './vector';
 
 type NumberMatrix = Array<Array<number>>;
@@ -5,6 +6,9 @@ type DotReturnType<T> =
   T extends Vector ? Vector :
   T extends Matrix ? Matrix :
   T extends number ? Matrix : unknown;
+type VectorizedFunction = (v: Vector) => Vector;
+type VectorizedAccFunction = (acc: Vector, v: Vector) => Vector;
+type AxisType = 'column' | 'row';
 
 /**
  * Class for modelling Matrix elementary operations 
@@ -18,14 +22,14 @@ type DotReturnType<T> =
  * 1. Transposition
  * 1. Matrix norm for computing distance
  */
- 
+
 export class Matrix extends Array<Array<number>> {
   /**
    * @property {number} numRows - Number of rows in the matrix
    * @property {number} numCols - Number of columns in the matrix
   */
-  numRows: number = 0;
-  numCols: number = 0;
+  numRows = 0;
+  numCols = 0;
 
   /**
    * Constructor of the Matrix
@@ -107,7 +111,7 @@ export class Matrix extends Array<Array<number>> {
    * @returns {Matrix} The result of the product
   */
   transposedDot(b: Matrix): Matrix {
-    if (this.numCols !== b.numCols) {
+    if (this.numRows !== b.numRows) {
       throw new Error(`[MATMUL] Matrices must have consistent dimensions (a = [${this.numRows}, ${this.numCols}], b = [${b.numRows}, ${b.numCols}]).`);
     }
     const result: NumberMatrix = [];
@@ -132,10 +136,10 @@ export class Matrix extends Array<Array<number>> {
    * Multiplies matrices using nested loop. Ideally, I would like to
    * use a more efficient algorithm but this is for illustrative
    * @param {Matrix} b - Matrix to multiply
-   * @param {boolean} transpose - Whether to transpose the first matrix
+   * @param transpose - Whether to transpose the first matrix
    * @return {Matrix} The result of the multiplication
   */
-  matrixDot(b: Matrix, transpose: boolean = false): Matrix {
+  matrixDot(b: Matrix, transpose = false): Matrix {
     if (!transpose) {
       return this.normalDot(b);
     }
@@ -194,10 +198,10 @@ export class Matrix extends Array<Array<number>> {
    * If the argument is vector, returns vector multiplication
    * If the argument is matrix, returns matrix multiplication
    * @param {T} b - object to multiply by right
-   * @param {boolean} transpose - Whether to transpose the matrix
+   * @param transpose - Whether to transpose the matrix
    * @returns {DotReturnType<T>} The result of the multiplication
   */
-  dot<T>(b: T, transpose: boolean = false): DotReturnType<T> {
+  dot<T>(b: T, transpose = false): DotReturnType<T> {
     if (b instanceof Matrix) {
       return this.matrixDot(b, transpose) as DotReturnType<T>;
     }
@@ -207,7 +211,7 @@ export class Matrix extends Array<Array<number>> {
     if (typeof b === 'number') {
       return this.numberDot(b) as DotReturnType<T>;
     }
-    throw new Error(`[MATMUL] Vectors must be of type Matrix or Vector or Number.`);
+    throw new Error('[MATMUL] Vectors must be of type Matrix or Vector or Number.');
   }
 
   /**
@@ -232,6 +236,9 @@ export class Matrix extends Array<Array<number>> {
 
   /**
    * Matrix norm
+   * @remarks
+   * This norm is a 1-norm, based on absolute value
+   * of the elements.
    * @returns {number} The norm of the matrix
   */
   norm(): number {
@@ -242,5 +249,147 @@ export class Matrix extends Array<Array<number>> {
       }
     }
     return sum;
+  }
+
+  /**
+   * Vectorized operation
+   * @remarks
+   * This function applies a simple scalar function
+   * ```javascript
+   * const f = (a: number) => number
+   * ```
+   * to all the elements of the matrix
+   * @param {function (number): number} f - Callback function
+   * @returns {Matrix} Returns the operation applied to all elements of
+   * a matrix
+  */
+  apply(f: ActivationFunction): Matrix {
+    const result: NumberMatrix = [];
+    for (let i = 0; i < this.numRows; i++) {
+      result[i] = [];
+      for (let j = 0; j < this.numCols; j++) {
+        result[i][j] = f(this[i][j]);
+      }
+    }
+    return new Matrix(...result);
+  }
+
+  /**
+   * Fetch a matrix row by index
+   * @param {number} idx - index of row to fetch
+   * @returns {Vector} row vector
+   */
+  getRow(idx: number): Vector {
+    if (idx < 0 || idx >= this.numRows) {
+      throw new Error(`[ROW] Row index out of bounds (rows = ${this.numRows}).`);
+    }
+    return new Vector(...this[idx]);
+  }
+
+  /**
+   * Update row by index
+   * @param {number} idx - index of row to update
+   * @param {number[]} col - vector for updating row
+   */
+  setRow(idx: number, row: number[]) {
+    if (row.length !== this.numCols) {
+      throw new Error(`[ROW] Column must have the same length (cols = ${this.numRows}).`);
+    }
+    for (let jdx = 0; jdx < this.numCols; jdx++) {
+      this[idx][jdx] = row[jdx];
+    }
+  }
+
+  /**
+   * Fetch a matrix column by index
+   * @param {number} idx - index of column to fetch
+   * @returns {Vector} column vector
+   */
+  getColumn(idx: number): Vector {
+    if (idx < 0 || idx >= this.numRows) {
+      throw new Error(`[COL] Row index out of bounds (rows = ${this.numRows}).`);
+    }
+    const col: number[] = [];
+    for (let jdx = 0; jdx < this.numRows; jdx++) {
+      col[jdx] = this[jdx][idx];
+    }
+    return new Vector(...col);
+  }
+
+  /**
+   * Update col by index
+   * @param {number} idx - index of col to update
+   * @param {number[]} col - vector for updating col
+   */
+  setColumn(idx: number, col: number[]) {
+    if (col.length !== this.numRows) {
+      throw new Error(`[ROW] Column must have the same length (cols = ${this.numRows}).`);
+    }
+    for (let jdx = 0; jdx < this.numRows; jdx++) {
+      this[jdx][idx] = col[jdx];
+    }
+  }
+
+  /**
+   * Axis-wise operation on matrix
+   * @remarks
+   * Applies a callback
+   * ```javascript
+   * const f = (f: Vector) => Vector
+   * ```
+   * to all rows/columns depending on the axis
+   * @param {function (Vector): Vector} f - callback to execute over the axis
+   * @param {"row" | "column"} axis - axis for executing the callback
+   * @returns {Matrix} Matrix after vectorized execution
+   */
+  vectorApply(f: VectorizedFunction, axis: AxisType = 'row'): Matrix {
+    if (axis === 'row') {
+      const result: NumberMatrix = [];
+      for (let idx = 0; idx < this.numRows; idx++) {
+        result[idx] = f(this.getRow(1));
+      }
+      return new Matrix(...result);
+    }
+
+    const copy = new Matrix(...this);
+    for (let idx = 0; idx < this.numCols; idx++) {
+      copy.setColumn(idx, f(this.getColumn(idx)));
+    }
+
+    return copy;
+  }
+
+  /**
+   * Vectorized accumulation function
+   * @remarks
+   * Similar to simple arrays accumulation function, but
+   * can be applied to a given axis
+   * @param {function (Vector): Vector} f - Accumulation function
+   * @param {"row" | "column"} axis 
+   * @returns {Vector} Accumulated vector
+   */
+  vectorReduce(f: VectorizedAccFunction, axis: AxisType = 'row'): Vector {
+    if (axis === 'row') {
+      if (this.numRows === 1) {
+        throw new Error(
+          '[MATACC] Unable to accumulate because matrix has less than two rows',
+        );
+      }
+      let result = new Vector(...this.getRow(0));
+      for (let idx = 1; idx < this.numRows; idx++) {
+        result = f(result, this.getRow(idx));
+      }
+      return result;
+    }
+    if (this.numCols === 1) {
+      throw new Error(
+        '[MATACC] Unable to accumulate because matrix has less than two columns',
+      );
+    }
+    let result = new Vector(...this.getColumn(0));
+    for (let idx = 1; idx < this.numCols; idx++) {
+      result = f(result, this.getColumn(idx));
+    }
+    return result;
   }
 }
